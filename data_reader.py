@@ -65,24 +65,18 @@ def build_working_df(df):
     df1 = df[cols]
     print 'Step 2: id selection'
     df2 = df1[df1['id'].isin(fruitful_ids)]
-    #print 'Step 3: rename fundamental_$ to f$, technical_$ to t$, derived_$ to d$'
-    #df2.columns = df2.columns.str.replace("fundamental_","f").replace("technical_","t").replace("derived_","d")
-    return df2
-
-# return a dictionary of (id, timestamp) -> prev_timestamp
-def build_id_prev_timestamp_dict(df, id):
-    prev_ts_dict = dict()
-    pass
-
-def get_id_prev_timestamp(security_id, timestamp):
-    pass
-
-# return dataframe with additional column of lagged feature values
-def add_lagged_feature(df, feature_name, lag=1):
-    ids = get_all_ids(df)
-    df2 = df[df.id == ids[0]]
-    #for i in range(1, len(ids)):
-    pass
+    print 'Step 3: sort the df by (id, timestamp) incrementally, reset dataframe index by new order'
+    df2=df2.sort_values(by=['id','timestamp'])
+    df2.reset_index(inplace=True, drop=True)
+    print 'Step 4: add y(t+1) by shifting column y'
+    df3 = df2.assign(y1=df2.y.shift(-1).values)
+    print 'Step 5: assign NaN to last occurrence of all ids y(t+1) because obs from different ids are stacked together'
+    for i in range(1,len(fruitful_ids)):
+        id_ = fruitful_ids[i]
+        first_occur_idx = df3[df3.id==id_].index.tolist()[0]
+        print 'id=%d,first_occur_idx=%d'%(id_, first_occur_idx)
+        df3.ix[first_occur_idx-1,'y1'] = None
+    return df3
 
 
 
@@ -93,19 +87,25 @@ def df_fill_na(df):
     filled_df = df.fillna(df.mean())
     return filled_df
 
-# return two dataframe namely train and test
-# where train contains obs that ts<=split_timestamp, test contains ts>split_timestamp
+
+
+# return two dataframe namely first and second
+# where first contains obs that ts<=split_timestamp, second contains ts>split_timestamp
 def split_df_by_timestamp(df, split_timestamp=1500):
-    train_df = df[df.timestamp <= split_timestamp]
-    test_df = df[df.timestamp > split_timestamp]
-    return train_df, test_df
+    first_df = df[df.timestamp < split_timestamp]
+    second_df = df[df.timestamp >= split_timestamp]
+    return first_df, second_df
+
+
 
 # export pre-processed dataframe into a csv file
 def export_df_to_csv(df, csv_filename="preprocessed_data.csv"):
-    df.to_csv(csv_filename,sep=',',na_rep='',float_format="%.8f")
+    print 'exporting dataframe to ', csv_filename
+    df.to_csv(csv_filename,sep=',',na_rep='',float_format="%.8f",index=False)
 
 def import_df_from_csv(csv_filename="preprocessed_data.csv"):
-    df = pd.read_csv(csv_filename,sep=',',index_col=0)
+    print 'importing dataframe from ', csv_filename
+    df = pd.read_csv(csv_filename,sep=',',index_col=None)
     return df
 
 if __name__ == '__main__':
