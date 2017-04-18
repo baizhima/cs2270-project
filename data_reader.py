@@ -4,13 +4,13 @@
 import pandas as pd
 
 # data exploration
-def df_explore(df):
+def explore(df):
     print 'training data exploration'
     print 'all ids are ', get_all_ids(df)
     print 'all timestamps are', get_all_timestamps(df)
     print 'total number of observations', len(df) # ~1710000 obs
     
-    print 'security ids with at least 100 obs are', get_fruitful_ids(df)
+    print 'securities ids with at least 100 obs are', get_fruitful_ids(df)
     print 'features with at most 100,000 n/a values are', get_fruitful_columns(df)
 
 
@@ -60,13 +60,13 @@ def get_fruitful_ids(df, min_num_obs=100):
 def build_working_df(df):
     fruitful_ids = get_fruitful_ids(df)
     cols = get_fruitful_columns(df)
-    print 'building working dataframe...'
+    print 'Building working dataframe...'
     print 'Step 1: column selection'
     df1 = df[cols]
     print 'Step 2: id selection'
     df2 = df1[df1['id'].isin(fruitful_ids)]
     print 'Step 3: sort the df by (id, timestamp) incrementally, reset dataframe index by new order'
-    df2=df2.sort_values(by=['id','timestamp'])
+    df2 = df2.sort_values(by=['id','timestamp']) # inplace=True will cause warning
     df2.reset_index(inplace=True, drop=True)
     print 'Step 4: add y(t+1) by shifting column y'
     df3 = df2.assign(y1=df2.y.shift(-1).values)
@@ -74,27 +74,9 @@ def build_working_df(df):
     for i in range(1,len(fruitful_ids)):
         id_ = fruitful_ids[i]
         first_occur_idx = df3[df3.id==id_].index.tolist()[0]
-        print 'id=%d,first_occur_idx=%d'%(id_, first_occur_idx)
+        #print 'id=%d,first_occur_idx=%d'%(id_, first_occur_idx)
         df3.ix[first_occur_idx-1,'y1'] = None
     return df3
-
-
-
-# return dataframe with all n/a filled with column means
-def df_fill_na(df):
-    mean_vals = df.mean(axis=0)
-    print 'mean_vals are', mean_vals
-    filled_df = df.fillna(df.mean())
-    return filled_df
-
-
-
-# return two dataframe namely first and second
-# where first contains obs that ts<=split_timestamp, second contains ts>split_timestamp
-def split_df_by_timestamp(df, split_timestamp=1500):
-    first_df = df[df.timestamp < split_timestamp]
-    second_df = df[df.timestamp >= split_timestamp]
-    return first_df, second_df
 
 
 
@@ -112,7 +94,7 @@ if __name__ == '__main__':
     print 'Hello'
     with pd.HDFStore("train.h5", "r") as train:
         df = train.get("train")
-        df_explore(df)
+        explore(df)
         work_df = build_working_df(df)
         export_df_to_csv(work_df)
         work_df_no_na = df_fill_na(work_df)
