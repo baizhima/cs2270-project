@@ -1,0 +1,60 @@
+y1                     1.000000
+y                      0.021340
+technical_30           0.012709
+technical_30_lag1      0.010401
+technical_27_lag1      0.008582
+technical_27           0.008282
+technical_19_lag1      0.007982
+technical_19           0.007735
+technical_35_lag1      0.006758
+technical_35           0.006383
+technical_11_lag1      0.006382
+technical_36_lag1      0.006295
+technical_20           0.006229
+y_lag1                 0.006164
+technical_36           0.006037
+technical_2_lag1       0.005980
+fundamental_53_lag1    0.005975
+fundamental_53         0.005916
+technical_11           0.005870
+technical_2            0.005608
+fundamental_18         0.005071
+fundamental_18_lag1    0.005029
+technical_43           0.004848
+technical_43_lag1      0.004768
+technical_6_lag1       0.004657
+technical_6            0.004391
+technical_0            0.004012
+technical_13_lag1      0.003858
+technical_14           0.003696
+technical_14_lag1      0.003682
+technical_21_lag1      0.000500
+technical_41           0.000488
+fundamental_42_lag1    0.000458
+technical_42_lag1      0.000432
+fundamental_42         0.000422
+technical_41_lag1      0.000353
+fundamental_48_lag1    0.000337
+derived_0_lag1         0.000319
+                 fundamental_48         0.000297
+                 technical_33           0.000297
+                 technical_39_lag1      0.000269
+                 fundamental_41         0.000260
+                 derived_0              0.000243
+                 technical_21           0.000231
+                 fundamental_45_lag1    0.000229
+                 fundamental_41_lag1    0.000229
+                 fundamental_45         0.000224
+                 technical_33_lag1      0.000222
+                 technical_42           0.000196
+                 fundamental_19         0.000191
+                 fundamental_19_lag1    0.000177
+                 fundamental_33         0.000173
+                 fundamental_33_lag1    0.000168
+                 fundamental_36_lag1    0.000077
+                 fundamental_36         0.000070
+                 fundamental_21         0.000059
+                 fundamental_7_lag1     0.000050
+                 fundamental_7          0.000037
+                 technical_39           0.000025
+fundamental_21_lag1    0.000014
