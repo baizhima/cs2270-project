@@ -1,5 +1,6 @@
 import psycopg2
 import re
+import pandas as pd
 
 filepath = './data/preprocessed_data.csv'
 raw_data_table = 'raw_data'
@@ -69,5 +70,11 @@ def execute_cql(conn, cur, cql):
 		else:
 			print cur.fetchone()[0]
 
+# Read table into df
+def read_raw_to_dataframe(conn):
+	df = pd.read_sql_query("SELECT * FROM " + raw_data_table + ";", conn)
+	return df
+
 # def visualize(conn, cur):
+
 
