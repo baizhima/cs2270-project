@@ -5,7 +5,6 @@ from data_reader import *
 def df_fill_na(df,method="mean"):
   if method == 'mean':
     mean_vals = df.mean(axis=0)
-    print 'mean_vals are', mean_vals
     filled_df = df.fillna(df.mean())
     return filled_df
 
@@ -20,12 +19,7 @@ def df_drop_extreme_value_columns(df):
 # input: df - pandas.DataFrame, features - list of str, lags - list of lag periods, all should be positive values
 def df_add_lag_features(df, features=["y","y"], lags=[1,2]):
   assert len(features) == len(lags)
-  '''
-  ids = get_all_ids(df)
-  first_occur_index_dict = {id_:-1 for id_ in ids}
-  for id_ in ids:
-    first_occur_index_dict[id_] = df[df.id==id_].index.tolist()[0]
-  '''
+  
   for i, feature_name in enumerate(features):
     print 'i=%d,total=%d'%(i, len(features))
     assert feature_name in df.columns
@@ -34,11 +28,7 @@ def df_add_lag_features(df, features=["y","y"], lags=[1,2]):
     assert lag_feature_name not in df.columns
     df = df.assign(lag_feature_name=df[feature_name].shift(lag).values)
     df = df.rename(columns={'lag_feature_name':lag_feature_name})
-    '''
-    for id_ in ids:
-      idx = first_occur_index_dict[id_]
-      df.ix[idx:idx+lag-1,lag_feature_name] = None # both start and stop bounds are INCLUDED, see http://pandas.pydata.org/pandas-docs/stable/indexing.html
-    '''
+    
   return df
 
 
@@ -56,6 +46,15 @@ def df_drop_rows_with_na(df,max_lag=1):
     dropped.reset_index(inplace=True, drop=True)
     return dropped
 
+# output df.columns.tolist()=[id,timestamp, sorted(features), y1]
+def df_reorder_columns(df):
+  feature_cols = sorted(list(set(df.columns.values.tolist()) - set(['id','timestamp','y1'])))
+  reordered_cols = ['id','timestamp'] + feature_cols + ['y1']
+  return df[reordered_cols]
+
+def df_reorder_rows(df):
+  df = df.sort_values(by=['timestamp','id']) # inplace=True will cause warning
+  return df
 
 # return two dataframe namely first and second
 # where first contains obs that ts<=split_timestamp, second contains ts>split_timestamp
@@ -104,6 +103,8 @@ def main():
 
   df = df_add_lag_features(df,features=feature_list, lags=lag_list) # add t-1,t-2  lagged terms
   df = df_drop_rows_with_na(df, max_lag=max(lag_list))
+  df = df_reorder_rows(df)
+  df = df_reorder_columns(df)
   return df
 
   
