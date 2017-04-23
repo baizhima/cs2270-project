@@ -2,6 +2,7 @@ import psycopg2
 import re
 import pandas as pd
 import time
+import random
 
 #TODO: reorganize cur.execute
 
@@ -156,10 +157,10 @@ def update_raw(conn, cur, id, ts, y_value):
 def update_predict(conn, cur, id, ts, value):
 	# update predicted_value in predict_table		
 	# forecast 5 ts for each record
-	for i in range(1, 6):
+	for i in [1, 10]:
 		# should change values to res from model
-		insert_predict_sql = "INSERT INTO %s VALUES(%s, %d, %s)" % (predict_table, id, ts+i, value)
-		update_predict_sql = "UPDATE %s SET predicted_value=%s WHERE id = %s AND timestamp = %d" % (predict_table, value, id, ts+i)
+		insert_predict_sql = "INSERT INTO %s VALUES(%s, %d, %f)" % (predict_table, id, ts+i, value)
+		update_predict_sql = "UPDATE %s SET predicted_value=%f WHERE id = %s AND timestamp = %d" % (predict_table, value, id, ts+i)
 		try:
 			cur.execute(insert_predict_sql)
 		except:
@@ -181,4 +182,4 @@ def udpate_predict_training(conn, cur):
 	# print cur.rowcount
 	for res in cur.fetchall():
 		# TODO: get value from model
-		update_predict(conn, cur, res[0], int(res[1]), '1')
+		update_predict(conn, cur, res[0], int(res[1]), random.uniform(-1.0, 1.0))
