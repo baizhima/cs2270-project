@@ -1,0 +1,1 @@
+y,technical_11_lag1,technical_36_lag1,y_lag1,technical_43,technical_33_lag1,fundamental_41_lag1
