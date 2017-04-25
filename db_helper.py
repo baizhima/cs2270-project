@@ -145,7 +145,7 @@ def insert_raw(conn, cur, record):
 	try:
 		cur.execute(insert_raw_sql)
 	except Exception as e:
-		raise e
+		pass
 	finally:
 		conn.commit()
 
@@ -165,7 +165,7 @@ def update_predict(conn, cur, id):
 	if df_lag_row.empty:
 		return
 	
-	value = iter([random.uniform(-1.0, 1.0), predict.load_predict(df_lag_row)])
+	value = iter(predict.load_predict(df_lag_row))
 	ts = int(df_lag_row['timestamp'])
 	# update predicted_value in predict_table		
 	for i in [1, 10]:

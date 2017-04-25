@@ -9,8 +9,8 @@ def main():
 	'''
 	UNCOMMENT to import training data
 	'''
-	# db.import_training_data(conn, cur)
-	# db.udpate_predict_training(conn, cur)
+	db.import_training_data(conn, cur)
+	db.udpate_predict_training(conn, cur)
 
 	while (True):
 		line = raw_input('> ')
