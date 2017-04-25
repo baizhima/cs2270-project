@@ -3,6 +3,7 @@ import re
 import pandas as pd
 import time
 import random
+import predict_helper as predict
 
 #TODO: reorganize cur.execute
 
@@ -91,8 +92,7 @@ def execute_cql(conn, cur, cql):
 			cur.execute(recent_time_sql)
 		except Exception as e:
 			raise e
-		finally:
-			conn.commit()
+
 		# execute cql
 		try:
 			ts = int(cur.fetchone()[0]) + int(forecast_ts)
@@ -106,8 +106,6 @@ def execute_cql(conn, cur, cql):
 			cur.execute(forecast_sql)
 		except Exception as e:
 			raise e
-		finally:
-			conn.commit()
 
 		if cur.rowcount is 0:
 			print "Need to train model"
@@ -121,18 +119,26 @@ def execute_cql(conn, cur, cql):
 			print e
 		else:
 			return cur.fetchone()[0]
-		finally:
-			conn.commit()
 
 
-# Read table into df
-# TODO: ORDER BY
-def read_raw_to_dataframe(conn):
-	df = pd.read_sql_query('SELECT * FROM %s;' % raw_data_table, conn)
-	return df
-
-
+	
 # PREDICTION AND QUERY FEEDING
+
+# Given id, return the df containing both curr_ts and prev_ts
+# TODO: ORDER BY
+def get_lag_data(conn, id):
+	get_highest_sql = 'SELECT * FROM %s WHERE id=%s ORDER BY timestamp DESC LIMIT 1;' % (raw_data_table, id)
+	df_curr = pd.read_sql_query(get_highest_sql, conn)
+	get_prev_sql = 'SELECT * FROM %s WHERE id=%s AND timestamp=%d' % (raw_data_table, id, int(df_curr['timestamp'])-1)
+	df_prev = pd.read_sql_query(get_prev_sql, conn).drop(['id', 'timestamp'], axis=1)
+	
+	if df_prev.empty:
+		return pd.DataFrame()
+
+	# concat
+	lag_column_names = [c + '_lag1' for c in df_prev.columns]
+	df_prev.columns = lag_column_names
+	return pd.concat([df_curr, df_prev], axis=1)
 
 def insert_raw(conn, cur, record):
 	insert_raw_sql = "INSERT INTO %s VALUES(%s);" % (raw_data_table, record)		
@@ -153,14 +159,19 @@ def update_raw(conn, cur, id, ts, y_value):
 	finally:
 		conn.commit()
 
-# ts: int
-def update_predict(conn, cur, id, ts, value):
+def update_predict(conn, cur, id):
+	# Get df
+	df_lag_row = get_lag_data(conn, id)
+	if df_lag_row.empty:
+		return
+	
+	value = iter([random.uniform(-1.0, 1.0), predict.load_predict(df_lag_row)])
+	ts = int(df_lag_row['timestamp'])
 	# update predicted_value in predict_table		
-	# forecast 5 ts for each record
 	for i in [1, 10]:
-		# should change values to res from model
-		insert_predict_sql = "INSERT INTO %s VALUES(%s, %d, %f)" % (predict_table, id, ts+i, value)
-		update_predict_sql = "UPDATE %s SET predicted_value=%f WHERE id = %s AND timestamp = %d" % (predict_table, value, id, ts+i)
+		v = value.next()
+		insert_predict_sql = "INSERT INTO %s VALUES(%s, %d, %f)" % (predict_table, id, ts+i, v)
+		update_predict_sql = "UPDATE %s SET predicted_value=%f WHERE id = %s AND timestamp = %d" % (predict_table, v, id, ts+i)
 		try:
 			cur.execute(insert_predict_sql)
 		except:
@@ -171,15 +182,13 @@ def update_predict(conn, cur, id, ts, value):
 			conn.commit()
 
 
-
 def udpate_predict_training(conn, cur):
-	highest_ts_sql = 'SELECT DISTINCT id, max(timestamp) OVER (PARTITION BY id) AS curr_ts FROM %s;' % raw_data_table
+	select_id_sql = 'SELECT DISTINCT id FROM %s;' % raw_data_table
 	try:
-		cur.execute(highest_ts_sql)
+		cur.execute(select_id_sql)
 	except Exception as e:
 		raise e
-	# print highest_ts_sql
-	# print cur.rowcount
+	
 	for res in cur.fetchall():
-		# TODO: get value from model
-		update_predict(conn, cur, res[0], int(res[1]), random.uniform(-1.0, 1.0))
+		update_predict(conn, cur, res[0])
+		

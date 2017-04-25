@@ -14,7 +14,7 @@ import read as rd
 
 
 
-data_file_path = './shift/train_lag1_new.csv'
+data_file_path = './data/train_lag1_new.csv'
 df = rd.read_file(data_file_path)
 model_dict = {0: 'Linear Regression',
 			  1: 'SVR',
@@ -49,12 +49,13 @@ def train_model():
 
 
 
+# x is df [id, timestamp, feature, feature_lag1]
 def load_predict(x):
 	#select features for x test
 	# x = df[df['id'] == id & (df['timestamp'] == time_stamp)].loc[:, selected_attr_list]
 
 	#do the feature selection
-	feature = x.loc[selected_attr_list].values
+	feature = x.loc[:, selected_attr_list].values
 
 	#test using the model
 	if model_type == 3:
